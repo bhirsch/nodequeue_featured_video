@@ -1,0 +1,81 @@
+<?php
+/** 
+ * @file nodequeue_featured_video.install
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function nodequeue_featured_video_install() {
+  // Nodequeue
+  // Set $qid and $title.
+  // @see /profiles/civic/NODEQUEUE.txt
+  $title = 'Featured Video';
+  $qid = 3;
+  // Check for nodequeue with conflicting ID number.
+  $queue = nodequeue_load($qid);
+  if (!empty($queue)) {
+    // Error. Some rogue queue has hijacked qid 7.  
+    $txt = t('The queue named, !queue_title, is using qid !qid. Please contact an '
+          ."administrator. The !title queue will not work "
+          ."properly until this is resolved.", 
+            array(
+              '!queue_title' => $queue->title,
+              '!qid' => $qid,
+              '!title' => $title,
+            )
+          );
+    drupal_set_message($txt, 'error');
+  } 
+  else {
+    // Create "Recent Events" queue.
+    _nodequeue_featured_video_install_nodequeue();
+  } 
+}
+
+/**
+ * Implementation of hook_uninstall(). 
+ */
+function nodequeue_featured_video_uninstall() {
+  // Nodequeue
+  // Delete "Recent Events" queue.
+  _nodequeue_featured_video_uninstall_nodequeue();
+}
+
+//------------------------
+// Internal functions
+//------------------------
+
+/**
+ * Create Recent Events nodequeue.
+ * 
+ * Note: This has to be done by querying the database directly
+ * rather than call nodequeue_save() until there is a stable
+ * faux exportable.
+ * @see /profiles/civic/NODEQUEUE.txt
+ */
+function _nodequeue_featured_video_install_nodequeue() {
+  // nodequeue_queue
+  db_query("INSERT INTO {nodequeue_queue} "
+          ."VALUES "
+          ."(3,'Featured Video','',1,'','','nodequeue',1,1,0,'0',0,1)" );
+  // nodequeue_types
+  db_query("INSERT INTO {nodequeue_types} "
+          ."VALUES "
+          ."(3,'bio'),(3,'event'),(3,'issue'),"
+          ."(3,'legislation'),(3,'news_clip'),(3,'page'),"
+          ."(3,'press_release'),(3,'video') ");
+  // nodequeue_subqueue
+  db_query("INSERT INTO {nodequeue_subqueue} "
+          ."VALUES "
+          ."(3,3,'3','Featured Video') ");
+}
+
+/**
+ * Delete nodequeue.
+ */
+function _nodequeue_featured_video_uninstall_nodequeue() {
+  // Delete nodequeue.
+  $qid = 3; // @see /profiles/civic/NODEQUEUE.txt
+  nodequeue_delete($qid);  
+}
